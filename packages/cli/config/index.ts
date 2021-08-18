@@ -649,6 +649,45 @@ const config = convict({
 			env: 'N8N_VERSION_NOTIFICATIONS_INFO_URL',
 		},
 	},
+
+	telemetry: {
+		enabled: {
+			doc: 'Whether telemetry is enabled.',
+			format: Boolean,
+			default: true,
+			env: 'N8N_TELEMETRY_ENABLED',
+		},
+		config: {
+			frontend: {
+				key: {
+					doc: 'Telemetry key for frontend.',
+					format: String,
+					default: '1wfyHJrZGsJmqh86XcncyX2SN3T',
+					env: 'N8N_TELEMETRY_KEY_FRONTEND',
+				},
+				url: {
+					doc: 'Telemetry data plane URL for frontend.',
+					format: String,
+					default: 'http://telemetry-stage.n8n.io',
+					env: 'N8N_TELEMETRY_DATA_PLANE_URL_FRONTEND',
+				},
+			},
+			backend: {
+				key: {
+					doc: 'Telemetry key for backend.',
+					format: String,
+					default: '1wfxw1YdRGrntY8intaq53hui51',
+					env: 'N8N_TELEMETRY_KEY_BACKEND',
+				},
+				url: {
+					doc: 'Telemetry data plane URL for backend.',
+					format: String,
+					default: 'http://telemetry-stage.n8n.io/v1/batch',
+					env: 'N8N_TELEMETRY_DATA_PLANE_URL_FRONTEND',
+				},
+			},
+		},
+	},
 });
 
 // Overwrite default configuration with settings which got defined in

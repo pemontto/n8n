@@ -28,13 +28,13 @@ import * as express from 'express';
 import { readFileSync } from 'fs';
 import { dirname as pathDirname, join as pathJoin, resolve as pathResolve } from 'path';
 import {
-	getConnectionManager,
-	In,
-	Like,
 	FindManyOptions,
 	FindOneOptions,
+	getConnectionManager,
+	In,
 	IsNull,
 	LessThanOrEqual,
+	Like,
 	Not,
 } from 'typeorm';
 import * as bodyParser from 'body-parser';
@@ -70,6 +70,8 @@ import {
 	INodePropertyOptions,
 	INodeTypeDescription,
 	IRunData,
+	ITelemetryClientConfig,
+	ITelemetrySettings,
 	IWorkflowBase,
 	IWorkflowCredentials,
 	LoggerProxy,
@@ -135,9 +137,11 @@ import {
 	WorkflowHelpers,
 	WorkflowRunner,
 } from '.';
+
 import * as config from '../config';
 
 import * as TagHelpers from './TagHelpers';
+import { InternalHooksManager } from './InternalHooksManager';
 import { TagEntity } from './databases/entities/TagEntity';
 import { WorkflowEntity } from './databases/entities/WorkflowEntity';
 import { NameRequest } from './WorkflowHelpers';
@@ -236,6 +240,14 @@ class App {
 
 		const urlBaseWebhook = WebhookHelpers.getWebhookBaseUrl();
 
+		const telemetrySettings: ITelemetrySettings = {
+			enabled: config.get('telemetry.enabled') as boolean,
+		};
+
+		if (telemetrySettings.enabled) {
+			telemetrySettings.config = config.get('telemetry.config.frontend') as ITelemetryClientConfig;
+		}
+
 		this.frontendSettings = {
 			endpointWebhook: this.endpointWebhook,
 			endpointWebhookTest: this.endpointWebhookTest,
@@ -257,6 +269,7 @@ class App {
 				infoUrl: config.get('versionNotifications.infoUrl'),
 			},
 			instanceId: '',
+			telemetry: telemetrySettings,
 		};
 	}
 
@@ -281,9 +294,9 @@ class App {
 			promClient.collectDefaultMetrics({ register });
 		}
 
-		this.versions = await GenericHelpers.getVersions();
-		this.frontendSettings.versionCli = this.versions.cli;
-		this.frontendSettings.instanceId = (await generateInstanceId()) as string;
+		this.frontendSettings.instanceId = await UserSettings.getInstanceId();
+
+		InternalHooksManager.init(this.frontendSettings.instanceId);
 
 		await this.externalHooks.run('frontend.settings', [this.frontendSettings]);
 
@@ -451,10 +464,13 @@ class App {
 				};
 
 				jwt.verify(token, getKey, jwtVerifyOptions, (err: jwt.VerifyErrors, decoded: object) => {
-					if (err) ResponseHelper.jwtAuthAuthorizationError(res, 'Invalid token');
-					else if (!isTenantAllowed(decoded))
+					if (err) {
+						ResponseHelper.jwtAuthAuthorizationError(res, 'Invalid token');
+					} else if (!isTenantAllowed(decoded)) {
 						ResponseHelper.jwtAuthAuthorizationError(res, 'Tenant not allowed');
-					else next();
+					} else {
+						next();
+					}
 				});
 			});
 		}
@@ -826,6 +842,11 @@ class App {
 						if (tags.length) {
 							await TagHelpers.createRelations(req.params.id, tags, tablePrefix);
 						}
+
+						void InternalHooksManager.getInstance().onWorkflowTagsUpdated(
+							req.params.id,
+							tags.length,
+						);
 					}
 
 					// We sadly get nothing back from "update". Neither if it updated a record
@@ -845,12 +866,13 @@ class App {
 					}
 
 					await this.externalHooks.run('workflow.afterUpdate', [workflow]);
+					void InternalHooksManager.getInstance().onWorkflowSave(workflow);
 
 					if (workflow.active) {
 						// When the workflow is supposed to be active add it again
 						try {
+							void InternalHooksManager.getInstance().onWorkflowActivated(workflow);
 							await this.externalHooks.run('workflow.activate', [workflow]);
-
 							await this.activeWorkflowRunner.add(id, isActive ? 'update' : 'activate');
 						} catch (error) {
 							// If workflow could not be activated set it again to inactive
@@ -889,6 +911,7 @@ class App {
 				}
 
 				await Db.collections.Workflow!.delete(id);
+				void InternalHooksManager.getInstance().onWorkflowDeleted(id);
 				await this.externalHooks.run('workflow.afterDelete', [id]);
 
 				return true;
@@ -2779,6 +2802,7 @@ export async function start(): Promise<void> {
 		console.log(`Version: ${versions.cli}`);
 
 		await app.externalHooks.run('n8n.ready', [app]);
+		void InternalHooksManager.getInstance().onServerStarted(versions.cli);
 	});
 }
 

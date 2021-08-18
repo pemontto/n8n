@@ -226,6 +226,7 @@ export default mixins(
 		dialogVisible (newValue, oldValue) {
 			if (newValue) {
 				this.openDialog();
+				this.$telemetry.track('User opened workflow settings', { workflow_id: this.$store.getters.workflowId });
 			}
 			this.$externalHooks().run('workflowSettings.dialogVisibleChanged', { dialogVisible: newValue });
 		},
@@ -481,6 +482,7 @@ export default mixins(
 			this.closeDialog();
 
 			this.$externalHooks().run('workflowSettings.saveSettings', { oldSettings });
+			this.$telemetry.track('User updated workflow settings', { workflow_id: this.$store.getters.workflowId });
 		},
 		toggleTimeout() {
 			this.workflowSettings.executionTimeout = this.workflowSettings.executionTimeout === -1 ? 0 : -1;

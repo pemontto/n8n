@@ -13,6 +13,7 @@ import App from '@/App.vue';
 import router from './router';
 
 import { runExternalHook } from './components/mixins/externalHooks';
+import { TelemetryPlugin } from './plugins/telemetry';
 
 import { store } from './store';
 
@@ -20,6 +21,8 @@ Vue.config.productionTip = false;
 router.afterEach((to, from) => {
 	runExternalHook('main.routeChange', store, { from, to });
 });
+
+Vue.use(TelemetryPlugin);
 
 new Vue({
 	router,

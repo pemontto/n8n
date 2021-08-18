@@ -340,6 +340,7 @@ export default mixins(
 			openNodeCreator () {
 				this.createNodeActive = true;
 				this.$externalHooks().run('nodeView.createNodeActiveChanged', { source: 'add_node_button' });
+				this.$telemetry.trackNodesPanel('nodeView.createNodeActiveChanged', { source: 'add_node_button' });
 			},
 			async openExecution (executionId: string) {
 				this.resetWorkspace();
@@ -368,6 +369,7 @@ export default mixins(
 				});
 
 				this.$externalHooks().run('execution.open', { workflowId: data.workflowData.id, workflowName: data.workflowData.name, executionId });
+				this.$telemetry.track('User opened read-only execution', { workflow_id: data.workflowData.id, execution_mode: data.mode, execution_finished: data.finished });
 
 				if (data.finished !== true && data.data.resultData.error) {
 					// Check if any node contains an error
@@ -821,6 +823,12 @@ export default mixins(
 				this.getSelectedNodesToSave().then((data) => {
 					const nodeData = JSON.stringify(data, null, 2);
 					this.copyToClipboard(nodeData);
+					if (data.nodes.length > 0) {
+						this.$telemetry.track('User copied nodes', {
+							node_types: data.nodes.map((node: INode) => node.type),
+							workflow_id: this.$store.getters.workflowId,
+						});
+					}
 				});
 			},
 
@@ -994,6 +1002,10 @@ export default mixins(
 					}
 				}
 
+				this.$telemetry.track('User pasted nodes', {
+					workflow_id: this.$store.getters.workflowId,
+				});
+
 				return this.importWorkflowData(workflowData!);
 			},
 
@@ -1011,6 +1023,8 @@ export default mixins(
 					return;
 				}
 				this.stopLoading();
+
+				this.$telemetry.track('User imported workflow', { source: 'url' });
 
 				return workflowData;
 			},
@@ -1230,6 +1244,7 @@ export default mixins(
 				this.$store.commit('setStateDirty', true);
 
 				this.$externalHooks().run('nodeView.addNodeButton', { nodeTypeName });
+				this.$telemetry.trackNodesPanel('nodeView.addNodeButton', { node_type: nodeTypeName });
 
 				// Automatically deselect all nodes and select the current one and also active
 				// current node
@@ -1354,6 +1369,7 @@ export default mixins(
 					// Display the node-creator
 					this.createNodeActive = true;
 					this.$externalHooks().run('nodeView.createNodeActiveChanged', { source: 'node_connection_drop' });
+					this.$telemetry.trackNodesPanel('nodeView.createNodeActiveChanged', { source: 'node_connection_drop' });
 				});
 
 				this.instance.bind('connection', (info: OnConnectionBindInfo) => {
@@ -2195,6 +2211,7 @@ export default mixins(
 				this.$store.commit('setOauthCallbackUrls', settings.oauthCallbackUrls);
 				this.$store.commit('setN8nMetadata', settings.n8nMetadata || {});
 				this.$store.commit('versions/setVersionNotificationSettings', settings.versionNotifications);
+				this.$store.commit('setTelemetry', settings.telemetry);
 			},
 			async loadNodeTypes (): Promise<void> {
 				const nodeTypes = await this.restApi().getNodeTypes();

@@ -428,6 +428,8 @@ export default mixins(
 
 					workflowName = workflowName.replace(/[^a-z0-9]/gi, '_');
 
+					this.$telemetry.track('User exported workflow', { workflow_id: workflowData.id });
+
 					saveAs(blob, workflowName + '.json');
 				} else if (key === 'workflow-save') {
 					this.saveCurrentWorkflow();
