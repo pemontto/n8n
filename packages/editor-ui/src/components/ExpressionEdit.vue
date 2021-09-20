@@ -109,26 +109,8 @@ export default mixins(
 			const resolvedExpressionValue = this.$refs.expressionResult && (this.$refs.expressionResult as any).getValue() || undefined;  // tslint:disable-line:no-any
 			this.$externalHooks().run('expressionEdit.dialogVisibleChanged', { dialogVisible: newValue, parameter: this.parameter, value: this.value, resolvedExpressionValue });
 
-			const nodeTypeSplit = this.$store.getters.activeNode.type.split('.');
-
-			let isValueDefault = false;
-			if(this.parameter.type === 'string') {
-				isValueDefault = this.value === `=${this.parameter.default}`;
-			} else {
-				isValueDefault = this.value === `={{${this.parameter.default}}}`;
-			}
-
-			if(!!newValue && nodeTypeSplit.length === 2 && nodeTypeSplit[0] === 'n8n-nodes-base') {
-				this.$telemetry.track('User opened Expression Editor', {
-					node_type: this.$store.getters.activeNode.type,
-					parameter_name: this.parameter.displayName,
-					parameter_field_type: this.parameter.type,
-					new_expression: isValueDefault,
-				});
-			}
-
-			if(!newValue) {
-				this.$telemetry.track('User closed Expression Editor', { empty_expression: isValueDefault });
+			if (!newValue) {
+				this.$telemetry.track('User closed Expression Editor', { empty_expression: (this.value === '=') || (this.value === '={{}}') || !this.value });
 			}
 		},
 	},

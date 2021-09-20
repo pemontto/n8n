@@ -74,7 +74,7 @@ class Telemetry {
 			switch (event) {
 				case 'nodeView.createNodeActiveChanged':
 					this.resetNodesPanelSession();
-					this.userNodesPanelSession.data.filterMode = properties.new_filter as string;
+					properties.nodes_panel_session_id = this.userNodesPanelSession.sessionId;
 					this.telemetry.track('User opened nodes panel', properties);
 					break;
 				case 'nodeCreateList.selectedTypeChanged':
@@ -97,6 +97,7 @@ class Telemetry {
 					}
 					break;
 				case 'nodeCreateList.onCategoryExpanded':
+					properties.is_subcategory = false;
 					this.telemetry.track('User viewed node category', properties);
 					break;
 				case 'nodeCreateList.onSubcategorySelected':
@@ -122,7 +123,7 @@ class Telemetry {
 		this.userNodesPanelSession.data = {
 			nodeFilter: '',
 			resultsNodes: [],
-			filterMode: 'Regular',
+			filterMode: 'All',
 		};
 	}
 
@@ -130,7 +131,6 @@ class Telemetry {
 		return {
 			search_string: this.userNodesPanelSession.data.nodeFilter,
 			results_count: this.userNodesPanelSession.data.resultsNodes.length,
-			results_nodes: this.userNodesPanelSession.data.resultsNodes,
 			filter_mode: this.userNodesPanelSession.data.filterMode,
 			nodes_panel_session_id: this.userNodesPanelSession.sessionId,
 		};
