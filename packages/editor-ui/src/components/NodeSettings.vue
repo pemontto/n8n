@@ -324,10 +324,6 @@ export default mixins(
 				this.updateNodeCredentialIssues(node);
 
 				this.$externalHooks().run('nodeSettings.credentialSelected', { updateInformation });
-				const credentialsKeys = Object.keys(updateInformation.properties.credentials || {});
-				if(credentialsKeys.length > 0) {
-					this.$telemetry.track('User selected credential from node modal', { credential_type: credentialsKeys[0] });
-				}
 			},
 			valueChanged (parameterData: IUpdateInformation) {
 				let newValue: NodeParameterValue;

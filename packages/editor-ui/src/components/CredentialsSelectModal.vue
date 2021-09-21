@@ -84,6 +84,7 @@ export default Vue.extend({
 		openCredentialType () {
 			this.modalBus.$emit('close');
 			this.$store.dispatch('ui/openNewCredential', { type: this.selected });
+			this.$telemetry.track('User opened Credential modal', { credential_type: this.selected, source: 'primary_menu', new_credential: true });
 		},
 	},
 });
