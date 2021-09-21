@@ -177,6 +177,7 @@ export default mixins(externalHooks, nodeBase, nodeHelpers, workflowHelpers).ext
 		},
 		disableNode () {
 			this.disableNodes([this.data]);
+			this.$telemetry.track('User set node enabled status', { node_type: this.data.type, is_enabled: !this.data.disabled });
 		},
 		executeNode () {
 			this.$emit('runWorkflow', this.data.name, 'Node.executeNode');
