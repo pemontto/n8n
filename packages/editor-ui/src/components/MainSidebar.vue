@@ -366,6 +366,7 @@ export default mixins(
 						return;
 					}
 
+					this.$telemetry.track('User imported workflow', { source: 'file' });
 					this.$root.$emit('importWorkflowData', { data: worflowData });
 				};
 
