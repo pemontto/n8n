@@ -19,6 +19,23 @@ export class Telemetry {
 				config.get('telemetry.config.backend.key') as string,
 				config.get('telemetry.config.backend.url') as string,
 			);
+
+			setInterval(async () => this.pulse(), 60 * 60 * 1000);
+		}
+	}
+
+	private async pulse(): Promise<void> {
+		// void this.track('ava');
+	}
+
+	async workflowExecutionTrack(properties: IDataObject): Promise<void> {
+		if (this.client) {
+			this.client.track({
+				userId: this.instanceId,
+				event: 'Workflow execution finished',
+				anonymousId: '000000000000',
+				properties,
+			});
 		}
 	}
 

@@ -69,6 +69,6 @@ export class InternalHooksClass implements IInternalHooksClass {
 			}
 		}
 
-		await this.telemetry.track('Workflow execution finished', properties);
+		await this.telemetry.workflowExecutionTrack(properties);
 	}
 }
