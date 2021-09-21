@@ -301,6 +301,7 @@ export interface IInternalHooksClass {
 	onWorkflowTagsUpdated(workflowId: string, tagsCount: number): Promise<void>;
 	onWorkflowDeleted(workflowId: string): Promise<void>;
 	onWorkflowPostExecute(workflow: IWorkflowBase, runData?: IRun): Promise<void>;
+	onN8nStop(): Promise<void>;
 }
 
 export interface IN8nConfig {

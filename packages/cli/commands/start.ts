@@ -24,6 +24,7 @@ import {
 	GenericHelpers,
 	// eslint-disable-next-line @typescript-eslint/no-unused-vars
 	IExecutionsCurrentSummary,
+	InternalHooksManager,
 	LoadNodesAndCredentials,
 	NodeTypes,
 	Server,
@@ -88,6 +89,8 @@ export class Start extends Command {
 		try {
 			const externalHooks = ExternalHooks();
 			await externalHooks.run('n8n.stop', []);
+
+			await InternalHooksManager.getInstance().onN8nStop();
 
 			setTimeout(() => {
 				// In case that something goes wrong with shutdown we

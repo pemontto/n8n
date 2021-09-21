@@ -69,6 +69,10 @@ export class InternalHooksClass implements IInternalHooksClass {
 			}
 		}
 
-		await this.telemetry.workflowExecutionTrack(properties);
+		await this.telemetry.trackWorkflowExecution(properties);
+	}
+
+	async onN8nStop(): Promise<void> {
+		await this.telemetry.trackN8nStop();
 	}
 }
