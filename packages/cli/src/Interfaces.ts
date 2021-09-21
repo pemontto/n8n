@@ -282,8 +282,20 @@ export interface IExternalHooksClass {
 	run(hookName: string, hookParameters?: any[]): Promise<void>;
 }
 
+export interface IDiagnosticInfo {
+	versionCli: string;
+	databaseType: DatabaseType;
+	notificationsEnabled: boolean;
+	disableProductionWebhooksOnMainProcess: boolean;
+	basicAuthActive: boolean;
+	systemInfo: IDataObject;
+	executionVariables: {
+		[key: string]: string | number | undefined;
+	};
+}
+
 export interface IInternalHooksClass {
-	onServerStarted(n8nVersion: string): Promise<void>;
+	onServerStarted(diagnosticInfo: IDiagnosticInfo): Promise<void>;
 	onWorkflowSave(workflow: WorkflowEntity): Promise<void>;
 	onWorkflowActivated(workflow: WorkflowEntity): Promise<void>;
 	onWorkflowTagsUpdated(workflowId: string, tagsCount: number): Promise<void>;

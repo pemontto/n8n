@@ -39,6 +39,7 @@ import {
 } from 'typeorm';
 import * as bodyParser from 'body-parser';
 import * as history from 'connect-history-api-fallback';
+import * as os from 'os';
 // eslint-disable-next-line import/no-extraneous-dependencies
 import * as _ from 'lodash';
 import * as clientOAuth2 from 'client-oauth2';
@@ -119,6 +120,7 @@ import {
 	IExecutionsStopData,
 	IExecutionsSummary,
 	IExternalHooksClass,
+	IDiagnosticInfo,
 	IN8nUISettings,
 	IPackageVersions,
 	ITagWithCountDb,
@@ -2802,7 +2804,42 @@ export async function start(): Promise<void> {
 		console.log(`Version: ${versions.cli}`);
 
 		await app.externalHooks.run('n8n.ready', [app]);
-		void InternalHooksManager.getInstance().onServerStarted(versions.cli);
+		const cpus = os.cpus();
+		const diagnosticInfo: IDiagnosticInfo = {
+			basicAuthActive: config.get('security.basicAuth.active') as boolean,
+			databaseType: (await GenericHelpers.getConfigValue('database.type')) as DatabaseType,
+			disableProductionWebhooksOnMainProcess:
+				config.get('endpoints.disableProductionWebhooksOnMainProcess') === true,
+			notificationsEnabled: config.get('versionNotifications.enabled') === true,
+			versionCli: versions.cli,
+			systemInfo: {
+				os: {
+					type: os.type(),
+					version: os.version(),
+				},
+				memory: os.totalmem() / 1024,
+				cpus: {
+					count: cpus.length,
+					model: cpus[0].model,
+					speed: cpus[0].speed,
+				},
+			},
+			executionVariables: {
+				executions_process: config.get('executions.process'),
+				executions_mode: config.get('executions.mode'),
+				executions_timeout: config.get('executions.timeout'),
+				executions_timeout_max: config.get('executions.maxTimeout'),
+				executions_data_save_on_error: config.get('executions.saveDataOnError'),
+				executions_data_save_on_success: config.get('executions.saveDataOnSuccess'),
+				executions_data_save_on_progress: config.get('executions.saveExecutionProgress'),
+				executions_data_save_manual_executions: config.get('executions.saveDataManualExecutions'),
+				executions_data_prune: config.get('executions.pruneData'),
+				executions_data_max_age: config.get('executions.pruneDataMaxAge'),
+				executions_data_prune_timeout: config.get('executions.pruneDataTimeout'),
+			},
+		};
+
+		void InternalHooksManager.getInstance().onServerStarted(diagnosticInfo);
 	});
 }
 

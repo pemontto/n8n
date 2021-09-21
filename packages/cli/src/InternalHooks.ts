@@ -1,15 +1,15 @@
 /* eslint-disable import/no-cycle */
 import { IDataObject, IRun } from 'n8n-workflow';
 import * as telemetryHelpers from './telemetry/helpers';
-import { IInternalHooksClass, IWorkflowBase } from '.';
+import { IDiagnosticInfo, IInternalHooksClass, IWorkflowBase } from '.';
 import { Telemetry } from './telemetry';
 import { WorkflowEntity } from './databases/entities/WorkflowEntity';
 
 export class InternalHooksClass implements IInternalHooksClass {
 	constructor(private telemetry: Telemetry) {}
 
-	async onServerStarted(n8nVersion: string): Promise<void> {
-		await this.telemetry.identify({ n8n_version: n8nVersion });
+	async onServerStarted(diagnosticInfo: IDiagnosticInfo): Promise<void> {
+		await this.telemetry.identify({ ...diagnosticInfo });
 		await this.telemetry.track('Instance started');
 	}
 
