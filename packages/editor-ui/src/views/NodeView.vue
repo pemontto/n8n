@@ -1751,6 +1751,8 @@ export default mixins(
 				setTimeout(() => {
 					this.nodeSelectedByName(newNodeData.name, true);
 				});
+
+				this.$telemetry.track('User duplicated node', { node_type: node.type });
 			},
 			removeNode (nodeName: string) {
 				if (this.editAllowedCheck() === false) {
