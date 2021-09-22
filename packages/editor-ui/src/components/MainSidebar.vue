@@ -114,7 +114,7 @@
 						<span slot="title" class="item-title-root">Help</span>
 					</template>
 
-					<MenuItemsIterator :items="helpMenuItems" />
+					<MenuItemsIterator :items="helpMenuItems" :afterItemClick="trackHelpItemClick" />
 
 					<n8n-menu-item index="help-about">
 						<template slot="title">
@@ -295,6 +295,9 @@ export default mixins(
 			},
 		},
 		methods: {
+			trackHelpItemClick (itemType: string) {
+				this.$telemetry.track('User clicked help resource', { type: itemType });
+			},
 			toggleCollapse () {
 				this.$store.commit('ui/toggleSidebarMenuCollapse');
 			},
@@ -438,6 +441,7 @@ export default mixins(
 					this.$store.dispatch('ui/openDuplicateModal');
 				} else if (key === 'help-about') {
 					this.aboutDialogVisible = true;
+					this.trackHelpItemClick('about');
 				} else if (key === 'workflow-settings') {
 					this.workflowSettingsDialogVisible = true;
 				} else if (key === 'workflow-new') {
