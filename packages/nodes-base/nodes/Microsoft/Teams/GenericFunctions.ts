@@ -1,18 +1,29 @@
 import {
+	pki,
+} from 'node-forge';
+
+import {
+	constants,
+	createDecipheriv,
+	privateDecrypt,
+} from 'crypto';
+
+import {
 	OptionsWithUri,
 } from 'request';
 
 import {
 	IExecuteFunctions,
 	IExecuteSingleFunctions,
+	IHookFunctions,
 	ILoadOptionsFunctions,
 } from 'n8n-core';
 
 import {
-	IDataObject, NodeApiError,
+	IDataObject, IPollFunctions, NodeApiError,
 } from 'n8n-workflow';
 
-export async function microsoftApiRequest(this: IExecuteFunctions | IExecuteSingleFunctions | ILoadOptionsFunctions, method: string, resource: string, body: any = {}, qs: IDataObject = {}, uri?: string, headers: IDataObject = {}): Promise<any> { // tslint:disable-line:no-any
+export async function microsoftApiRequest(this: IExecuteFunctions | IExecuteSingleFunctions | ILoadOptionsFunctions | IHookFunctions | IPollFunctions, method: string, resource: string, body: any = {}, qs: IDataObject = {}, uri?: string, headers: IDataObject = {}): Promise<any> { // tslint:disable-line:no-any
 	const options: OptionsWithUri = {
 		headers: {
 			'Content-Type': 'application/json',
@@ -32,6 +43,55 @@ export async function microsoftApiRequest(this: IExecuteFunctions | IExecuteSing
 	} catch (error) {
 		throw new NodeApiError(this.getNode(), error);
 	}
+}
+
+export async function generateMSCert(modulusLength = 2048): Promise<{ fingerprint: string, cert: string, keys: any }> {
+	const keys = pki.rsa.generateKeyPair({bits: modulusLength, workers: -1});
+	const cert = pki.createCertificate();
+	cert.publicKey = keys.publicKey;
+	cert.validity.notAfter.setFullYear(cert.validity.notBefore.getFullYear() + 1); // adding 1 year of validity from no
+	cert.sign(keys.privateKey);
+	const fingerprint = pki.getPublicKeyFingerprint(cert.publicKey, {type: 'SubjectPublicKeyInfo', encoding: 'hex'});
+	// convert a Forge certificate to PEM
+	const pem = pki.certificateToPem(cert);
+	return {
+		fingerprint,
+		cert: pem,
+		keys,
+	};
+	// return generateKeyPairSync('rsa', {
+	// 	modulusLength,
+	// 	publicKeyEncoding: {
+	// 		type: 'spki',
+	// 		format: 'pem',
+	// 	},
+	// 	privateKeyEncoding: {
+	// 		type: 'pkcs8',
+	// 		format: 'pem',
+	// 		cipher,
+	// 		passphrase,
+	// 	},
+	// });
+}
+
+export async function decryptAESKey(encryptedKey: string, privateKey: any): Promise<string> {
+
+	return privateKey.decrypt(encryptedKey, 'RSA-OAEP');
+	// const decrypted = privateDecrypt({
+	// 		key: privateKey,
+	// 		padding: constants.RSA_PKCS1_OAEP_PADDING,
+	// 		passphrase,
+	// 	},
+	// 	Buffer.from(encryptedKey, 'base64'),
+	// );
+	// return decrypted.toString('utf8');
+}
+
+export async function decryptMessage(encryptedData: string, key: string, cipher = 'aes-256-cbc'): Promise<string> {
+	// Create IV from first 16 bytes of the key
+	const iv = key.slice(0, 16);
+	const decryptCipher = createDecipheriv(cipher, encryptedData, iv);
+	return Buffer.concat([decryptCipher.update(encryptedData, 'base64'), decryptCipher.final()]).toString('utf8');
 }
 
 export async function microsoftApiRequestAllItems(this: IExecuteFunctions | ILoadOptionsFunctions, propertyName: string, method: string, endpoint: string, body: any = {}, query: IDataObject = {}): Promise<any> { // tslint:disable-line:no-any
