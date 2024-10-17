@@ -1,8 +1,10 @@
 import type { IDataObject, IExecuteFunctions, INodeProperties } from 'n8n-workflow';
+
+import { updateDisplayOptions } from '@utils/utilities';
+
+import { calendarRLC, returnAllOrLimit } from '../../descriptions';
 import { eventfields } from '../../helpers/utils';
 import { microsoftApiRequest, microsoftApiRequestAllItems } from '../../transport';
-import { calendarRLC, returnAllOrLimit } from '../../descriptions';
-import { updateDisplayOptions } from '@utils/utilities';
 
 export const properties: INodeProperties[] = [
 	{
@@ -95,7 +97,7 @@ export async function execute(this: IExecuteFunctions, index: number) {
 	}
 
 	if (output === 'simple') {
-		qs.$select = 'id,subject,bodyPreview,start,end,organizer,attendees,webLink';
+		qs.$select = 'id,subject,bodyPreview,start,end,organizer,attendees,webLink,location';
 	}
 
 	if (Object.keys(filters).length) {

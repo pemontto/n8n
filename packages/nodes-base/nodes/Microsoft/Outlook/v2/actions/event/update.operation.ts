@@ -1,10 +1,11 @@
+import { DateTime } from 'luxon';
 import type { IDataObject, IExecuteFunctions, INodeProperties } from 'n8n-workflow';
 
-import { DateTime } from 'luxon';
-import { microsoftApiRequest } from '../../transport';
+import { updateDisplayOptions } from '@utils/utilities';
+
 import { calendarRLC, eventRLC } from '../../descriptions';
 import { decodeOutlookId } from '../../helpers/utils';
-import { updateDisplayOptions } from '@utils/utilities';
+import { microsoftApiRequest } from '../../transport';
 
 export const properties: INodeProperties[] = [
 	calendarRLC,
@@ -100,6 +101,12 @@ export const properties: INodeProperties[] = [
 				name: 'isOnlineMeeting',
 				type: 'boolean',
 				default: true,
+			},
+			{
+				displayName: 'Location',
+				name: 'location',
+				type: 'string',
+				default: '',
 			},
 			{
 				displayName: 'Sensitivity',
@@ -228,6 +235,12 @@ export async function execute(this: IExecuteFunctions, index: number) {
 		additionalFields.body = {
 			content: additionalFields.body,
 			contentType: 'html',
+		};
+	}
+
+	if (additionalFields.location) {
+		additionalFields.location = {
+			displayName: additionalFields.location,
 		};
 	}
 

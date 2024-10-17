@@ -1,8 +1,10 @@
 import type { IDataObject, IExecuteFunctions, INodeProperties } from 'n8n-workflow';
+
+import { updateDisplayOptions } from '@utils/utilities';
+
+import { calendarRLC, eventRLC } from '../../descriptions';
 import { decodeOutlookId, eventfields } from '../../helpers/utils';
 import { microsoftApiRequest } from '../../transport';
-import { calendarRLC, eventRLC } from '../../descriptions';
-import { updateDisplayOptions } from '@utils/utilities';
 
 export const properties: INodeProperties[] = [
 	calendarRLC,
@@ -68,7 +70,7 @@ export async function execute(this: IExecuteFunctions, index: number) {
 	}
 
 	if (output === 'simple') {
-		qs.$select = 'id,subject,bodyPreview,start,end,organizer,attendees,webLink';
+		qs.$select = 'id,subject,bodyPreview,start,end,organizer,attendees,webLink,location';
 	}
 
 	const endpoint = `/calendar/events/${eventId}`;
